@@ -35,10 +35,115 @@ volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bit
   volatile uint8_t sys_rt_exec_debug;
 #endif
 
+// -----------------------------------------------------------------------------
+// Macros to configure pin states
+// URL: https://www.avrfreaks.net/forum/macros-ddr-and-port-pin-name
+// -----------------------------------------------------------------------------
+#define configure_as_input(port, pin)             {DDR ## port &= ~(1 << pin);}
+#define configure_as_output(port, pin)            {DDR ## port |= (1 << pin);}
+
+#define pullup_on(port, pin)                      {PORT ## port |= (1 << pin);}
+#define pullup_off(port, pin)                     {PORT ## port &= ~(1 << pin);}
+
+#define set_high(port, pin)                       {PORT ## port |= (1 << pin);}
+#define set_low(port, pin)                        {PORT ## port &= ~(1 << pin);}
+
+#define set_to_input_high_z(port, pin)            {configure_as_input(port, pin); pullup_off(port, pin)}
+#define set_to_input_pullup(port, pin)            {configure_as_input(port, pin); pullup_on(port, pin);}
+
+#define set_to_output_low(port, pin)              {configure_as_output(port, pin); set_low(port, pin)}
+#define set_to_output_high(port, pin)             {configure_as_output(port, pin); set_high(port, pin)}
+
+// -----------------------------------------------------------------------------
+
+void port_init(void)
+{
+  // Port A
+  set_to_input_pullup (A,0);    // unused
+  set_to_output_low   (A,3);    // E1-EN
+  set_to_output_low   (A,4);    // E0-EN
+
+  // Port B
+  set_to_input_pullup (B,0);    // SS
+  set_to_input_pullup (B,1);    // SCK
+  set_to_input_pullup (B,2);    // MOSI
+  set_to_input_pullup (B,3);    // MISO
+  set_to_output_high  (B,7);    // LED
+
+  // Port C
+  set_to_output_low   (C,3);    // E0-STEP
+  set_to_output_low   (C,4);    // E1-STEP
+  set_to_input_pullup (C,5);    // unused
+  set_to_input_pullup (C,6);    // unused
+
+  // Port D
+  set_to_input_pullup (D,2);    // RX1
+  set_to_input_pullup (D,3);    // TX1
+  set_to_input_pullup (D,5);    // unused
+
+  // Port E
+  set_to_input_pullup (E,2);    // unused
+  set_to_input_pullup (E,3);    // unused
+  set_to_output_low   (E,4);    // FAN-2
+  set_to_input_pullup (E,5);    // HEAT-2
+  set_to_input_pullup (E,6);    // unused
+  set_to_input_pullup (E,7);    // unused
+
+  // Port F
+  set_to_input_pullup (F,0);    // THERM0
+  set_to_input_pullup (F,1);    // THERM1
+  set_to_input_pullup (F,2);    // THERM2
+  set_to_input_pullup (F,3);    // unused
+  set_to_input_pullup (F,4);    // unused
+  set_to_input_pullup (F,5);    // unused
+  set_to_input_pullup (F,6);    // unused
+  set_to_input_pullup (F,7);    // THERM3
+
+  // Port G
+  set_to_output_high  (G,0);    // X-MS2
+  set_to_output_high  (G,1);    // X-MS1
+  set_to_output_high  (G,2);    // Y-MS2
+  set_to_input_pullup (G,3);    // unused
+  set_to_input_pullup (G,4);    // unused
+  set_to_output_low   (G,5);    // BED-HEAT
+
+  // Port H
+  set_to_input_pullup (H,0);    // RX2
+  set_to_input_pullup (H,2);    // unused
+  set_to_output_low   (H,3);    // FAN-1
+  set_to_output_low   (H,4);    // HEAT-1
+  set_to_output_low   (H,5);    // FAN-0
+  set_to_input_pullup (H,6);    // unused
+  set_to_input_pullup (H,7);    // unused
+
+  // Port J
+  set_to_input_pullup (J,0);    // RX3
+  set_to_input_pullup (J,1);    // TX3
+  set_to_input_pullup (J,2);    // unused
+  set_to_output_low   (J,7);    // PS_ON
+
+  // Port K
+  set_to_input_pullup (K,0);    // unused
+  set_to_input_pullup (K,1);    // unused
+  set_to_input_pullup (K,2);    // unused
+  set_to_output_low   (K,3);    // E0-MS1
+  set_to_output_low   (K,4);    // E0-MS2
+  set_to_output_high  (K,5);    // Z-MS2
+  set_to_output_high  (K,6);    // Z-MS1
+  set_to_output_high  (K,7);    // Y-MS1
+
+  // Port L
+  set_to_output_low   (L,3);    // XY-REF-PWM
+  set_to_output_low   (L,4);    // Z-REF-PWM
+  set_to_output_low   (L,5);    // E-REF-PWM
+  set_to_output_low   (L,6);    // E0-DIR
+  set_to_output_low   (L,7);    // E1-DIR
+}
 
 int main(void)
 {
   // Initialize system upon power-up.
+  port_init();
   serial_init();   // Setup serial baud rate and interrupts
   settings_init(); // Load Grbl settings from EEPROM
   stepper_init();  // Configure stepper pins and interrupt timers
